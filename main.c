@@ -52,15 +52,15 @@ Não é necessário criar um aplicativo cliente. Você pode usar o aplicativo ne
 
 
 pthread_mutex_t mutex; // precisa ser global!
+char* listDir();
 
-void *ls(void *threadid){
+void *ls(void *threadid, char msg){
    	int *connfd = (int *)threadid;
    	char sendBuff[1025];
 
    	while (strcmp("exit\n", sendBuff) != 0){
 	   	int recebido = recv(*connfd, sendBuff, 1025, 0);
 		sendBuff[recebido] = '\0';
-		printf ("Valor recebido foi: %s", sendBuff);
 	   
 	   	if ((strncmp("mkdir ", sendBuff, 6)) == 0){
 			printf("\nESTOU NO MKDIR\n");
@@ -77,9 +77,28 @@ void *ls(void *threadid){
 		}
 
 		if ((strncmp("cd ", sendBuff, 3)) == 0){
+			
+				DIR *d;
+			    struct dirent *dir;
+			    d = opendir(".");
+
+			    if (d)
+			    {
+			        while ((strncmp("cd ..",sendBuff, 5))== 0)
+			        {
+			         	
+			         	 while ((dir = readdir(d)) != NULL) {
+            			printf ("[%s]\n", dir->d_name);
+		        		}
+
+			        }
+			        closedir(d);
+			    	}
+
 			printf("\nESTOU NO CD\n");
 			pthread_mutex_lock(&mutex);
-			system(sendBuff);
+
+			opendir("old");
 			pthread_mutex_unlock(&mutex);
 		}
 
@@ -87,6 +106,11 @@ void *ls(void *threadid){
 			printf("\nESTOU NO LS\n");
 			pthread_mutex_lock(&mutex);
 			system(sendBuff);
+			  	
+			  	char* ls = listDir();
+				write(*connfd, ls, 1024);
+   				free(ls);
+ 
 			pthread_mutex_unlock(&mutex);
 		}
 
@@ -120,10 +144,32 @@ void *ls(void *threadid){
 	}
 }
 
+
+char* listDir(){
+	char *retorno = calloc(2048,1);
+	int offset = 0;
+
+	DIR *d;
+    struct dirent *dir;
+    d = opendir(".");
+
+    if (d)
+    {
+        while ((dir = readdir(d)) != NULL)
+        {
+            offset = offset + sprintf(retorno + offset, "%s ", dir->d_name);
+        }
+        closedir(d);
+    }
+
+    return retorno;
+}
+
 int main(int argc, char **argv){
 	int listenfd = 0;
 	struct sockaddr_in serv_addr;
 	char sendBuff[1025];
+	char msg[1025] = "oiebit";
 
 	listenfd = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
