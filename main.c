@@ -21,7 +21,7 @@ As operações permitidas pelo sistema devem incluir:
 	mostrar conteúdo do diretório (ls)
 	criar arquivo (touch)
 	remover arquivo (rm)
-	escrever um sequência de caracteres em um arquivo (echo)
+	escrever um sequência de caracteres em um arquivo (echo) - echo "texto" > 'arquivo'
 	mostrar conteúdo do arquivo (cat)
 
 Etapa 1
